@@ -250,7 +250,9 @@ class MG_Category_Switcher_Woo {
     .mg-cat-chip.is-active{border-color:rgba(0,0,0,.55);font-weight:700}
     .mg-cat-chip__count{opacity:.65;font-size:12px}
     .mg-cat-switcher__meta{margin-top:10px;display:flex;gap:10px;flex-wrap:wrap}
-    .mg-cat-back{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:600}";
+    .mg-cat-back{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:600}
+    .woocommerce ul.products li.product a img{transition:transform .25s ease}
+    .woocommerce ul.products li.product a:hover img{transform:scale(1.05)}";
 
     $base_desktop = $this->format_scale($s['zoom_base_desktop'] ?? 0);
     $base_mobile = $this->format_scale($s['zoom_base_mobile'] ?? 0);
