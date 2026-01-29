@@ -20,6 +20,7 @@ class MG_Category_Switcher_Woo {
     add_action('wp_enqueue_scripts', [$this, 'enqueue_styles']);
     // Place under the category description, above products
     add_action('woocommerce_archive_description', [$this, 'render_switcher'], 25);
+    add_filter('woocommerce_get_price_html', [$this, 'append_from_label_to_price_html'], 20, 2);
   }
 
   /* =========================
@@ -76,13 +77,40 @@ class MG_Category_Switcher_Woo {
       'mg-category-switcher',
       'mg_cat_switcher_section_display'
     );
+
+    add_settings_field(
+      'zoom_base_desktop',
+      __('Fix kép nagyítás (asztali)', 'mg-category-switcher'),
+      [$this, 'field_zoom_base_desktop'],
+      'mg-category-switcher',
+      'mg_cat_switcher_section_display'
+    );
+
+    add_settings_field(
+      'zoom_base_mobile',
+      __('Fix kép nagyítás (mobil)', 'mg-category-switcher'),
+      [$this, 'field_zoom_base_mobile'],
+      'mg-category-switcher',
+      'mg_cat_switcher_section_display'
+    );
+
+    add_settings_field(
+      'zoom_hover_intensity',
+      __('Hover zoom effekt', 'mg-category-switcher'),
+      [$this, 'field_zoom_hover_intensity'],
+      'mg-category-switcher',
+      'mg_cat_switcher_section_display'
+    );
   }
 
   private function default_settings() {
     return [
-      'display_mode' => 'scroll', // scroll | wrap
-      'hide_empty'   => 0,
-      'show_counts'  => 1,
+      'display_mode'         => 'scroll', // scroll | wrap
+      'hide_empty'           => 0,
+      'show_counts'          => 1,
+      'zoom_base_desktop'    => 0,
+      'zoom_base_mobile'     => 0,
+      'zoom_hover_intensity' => 5,
     ];
   }
 
@@ -101,8 +129,23 @@ class MG_Category_Switcher_Woo {
 
     $out['hide_empty'] = !empty($input['hide_empty']) ? 1 : 0;
     $out['show_counts'] = !empty($input['show_counts']) ? 1 : 0;
+    $out['zoom_base_desktop'] = $this->sanitize_percent($input['zoom_base_desktop'] ?? 0);
+    $out['zoom_base_mobile'] = $this->sanitize_percent($input['zoom_base_mobile'] ?? 0);
+    $out['zoom_hover_intensity'] = $this->sanitize_percent($input['zoom_hover_intensity'] ?? 0);
 
     return $out;
+  }
+
+  private function sanitize_percent($value) {
+    $value = is_numeric($value) ? (float) $value : 0;
+    $value = max(0, min(100, $value));
+    return (int) round($value);
+  }
+
+  private function format_scale($percent) {
+    $percent = $this->sanitize_percent($percent);
+    $scale = 1 + ($percent / 100);
+    return number_format($scale, 3, '.', '');
   }
 
   public function render_settings_page() {
@@ -161,6 +204,33 @@ class MG_Category_Switcher_Woo {
     echo '</label>';
   }
 
+  public function field_zoom_base_desktop() {
+    $s = $this->get_settings();
+    $value = (int) $s['zoom_base_desktop'];
+    echo '<label>';
+    echo esc_html__('Fix kép nagyítás (asztali) %', 'mg-category-switcher') . ' ';
+    echo '<input type="number" min="0" max="100" step="1" name="'.esc_attr(self::OPTION_KEY).'[zoom_base_desktop]" value="'.esc_attr($value).'" style="width:90px;" />';
+    echo '</label>';
+  }
+
+  public function field_zoom_base_mobile() {
+    $s = $this->get_settings();
+    $value = (int) $s['zoom_base_mobile'];
+    echo '<label>';
+    echo esc_html__('Fix kép nagyítás (mobil) %', 'mg-category-switcher') . ' ';
+    echo '<input type="number" min="0" max="100" step="1" name="'.esc_attr(self::OPTION_KEY).'[zoom_base_mobile]" value="'.esc_attr($value).'" style="width:90px;" />';
+    echo '</label>';
+  }
+
+  public function field_zoom_hover_intensity() {
+    $s = $this->get_settings();
+    $value = (int) $s['zoom_hover_intensity'];
+    echo '<label>';
+    echo esc_html__('Hover zoom effekt erőssége %', 'mg-category-switcher') . ' ';
+    echo '<input type="number" min="0" max="100" step="1" name="'.esc_attr(self::OPTION_KEY).'[zoom_hover_intensity]" value="'.esc_attr($value).'" style="width:90px;" />';
+    echo '</label>';
+  }
+
   /* =========================
    * Frontend
    * ========================= */
@@ -182,6 +252,15 @@ class MG_Category_Switcher_Woo {
     .mg-cat-switcher__meta{margin-top:10px;display:flex;gap:10px;flex-wrap:wrap}
     .mg-cat-back{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:600}";
 
+    $base_desktop = $this->format_scale($s['zoom_base_desktop'] ?? 0);
+    $base_mobile = $this->format_scale($s['zoom_base_mobile'] ?? 0);
+    $hover_scale_desktop = $this->format_scale(($s['zoom_base_desktop'] ?? 0) + ($s['zoom_hover_intensity'] ?? 0));
+    $hover_scale_mobile = $this->format_scale(($s['zoom_base_mobile'] ?? 0) + ($s['zoom_hover_intensity'] ?? 0));
+
+    $css .= "
+    .woocommerce ul.products li.product a img{transition:transform .25s ease;transform:scale({$base_desktop});transform-origin:center}
+    .woocommerce ul.products li.product a:hover img{transform:scale({$hover_scale_desktop})}";
+
     if ($mode === 'scroll') {
       // Scroll mode: always single-row scroll on small screens; allow wrap on desktop unless forced
       $css .= "
@@ -196,6 +275,14 @@ class MG_Category_Switcher_Woo {
         .mg-cat-switcher__grid{flex-wrap:wrap;overflow:visible}
       }";
     }
+
+    $css .= "
+    @media (max-width: 768px){
+      .woocommerce ul.products{display:flex;flex-wrap:wrap;gap:12px}
+      .woocommerce ul.products li.product{width:calc(50% - 6px);margin:0}
+      .woocommerce ul.products li.product a img{width:100%;height:auto;transform:scale({$base_mobile})}
+      .woocommerce ul.products li.product a:hover img{transform:scale({$hover_scale_mobile})}
+    }";
 
     wp_register_style('mg-cat-switcher', false, [], self::VERSION);
     wp_enqueue_style('mg-cat-switcher');
@@ -276,6 +363,24 @@ class MG_Category_Switcher_Woo {
     }
 
     echo '</div>';
+  }
+
+  public function append_from_label_to_price_html($price_html, $product) {
+    if (!function_exists('is_product_category') || !is_product_category()) {
+      return $price_html;
+    }
+
+    if (!is_string($price_html) || $price_html === '') {
+      return $price_html;
+    }
+
+    $suffix = ' ' . esc_html__('- tól', 'mg-category-switcher');
+
+    if (strpos($price_html, '</bdi>') !== false) {
+      return preg_replace('/<\/bdi>/', $suffix . '</bdi>', $price_html, 1);
+    }
+
+    return $price_html . $suffix;
   }
 }
 
