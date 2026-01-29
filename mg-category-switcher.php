@@ -20,6 +20,7 @@ class MG_Category_Switcher_Woo {
     add_action('wp_enqueue_scripts', [$this, 'enqueue_styles']);
     // Place under the category description, above products
     add_action('woocommerce_archive_description', [$this, 'render_switcher'], 25);
+    add_filter('woocommerce_get_price_html', [$this, 'append_from_label_to_price_html'], 20, 2);
   }
 
   /* =========================
@@ -276,6 +277,24 @@ class MG_Category_Switcher_Woo {
     }
 
     echo '</div>';
+  }
+
+  public function append_from_label_to_price_html($price_html, $product) {
+    if (!function_exists('is_product_category') || !is_product_category()) {
+      return $price_html;
+    }
+
+    if (!is_string($price_html) || $price_html === '') {
+      return $price_html;
+    }
+
+    $suffix = ' ' . esc_html__('- tól', 'mg-category-switcher');
+
+    if (strpos($price_html, '</bdi>') !== false) {
+      return preg_replace('/<\/bdi>/', $suffix . '</bdi>', $price_html, 1);
+    }
+
+    return $price_html . $suffix;
   }
 }
 
