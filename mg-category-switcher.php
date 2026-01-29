@@ -181,7 +181,9 @@ class MG_Category_Switcher_Woo {
     .mg-cat-chip.is-active{border-color:rgba(0,0,0,.55);font-weight:700}
     .mg-cat-chip__count{opacity:.65;font-size:12px}
     .mg-cat-switcher__meta{margin-top:10px;display:flex;gap:10px;flex-wrap:wrap}
-    .mg-cat-back{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:600}";
+    .mg-cat-back{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:600}
+    .woocommerce ul.products li.product a img{transition:transform .25s ease}
+    .woocommerce ul.products li.product a:hover img{transform:scale(1.05)}";
 
     if ($mode === 'scroll') {
       // Scroll mode: always single-row scroll on small screens; allow wrap on desktop unless forced
@@ -197,6 +199,13 @@ class MG_Category_Switcher_Woo {
         .mg-cat-switcher__grid{flex-wrap:wrap;overflow:visible}
       }";
     }
+
+    $css .= "
+    @media (max-width: 768px){
+      .woocommerce ul.products{display:flex;flex-wrap:wrap;gap:12px}
+      .woocommerce ul.products li.product{width:calc(50% - 6px);margin:0}
+      .woocommerce ul.products li.product a img{width:100%;height:auto}
+    }";
 
     wp_register_style('mg-cat-switcher', false, [], self::VERSION);
     wp_enqueue_style('mg-cat-switcher');
