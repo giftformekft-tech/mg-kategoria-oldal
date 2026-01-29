@@ -299,6 +299,15 @@ class MG_Category_Switcher_Woo {
     .woocommerce ul.products li.product a img{transition:transform .25s ease;transform:scale({$base_desktop});transform-origin:center}
     .woocommerce ul.products li.product a:hover img{transform:scale({$hover_scale_desktop})}";
 
+    $base_desktop = $this->format_scale($s['zoom_base_desktop'] ?? 0);
+    $base_mobile = $this->format_scale($s['zoom_base_mobile'] ?? 0);
+    $hover_scale_desktop = $this->format_scale(($s['zoom_base_desktop'] ?? 0) + ($s['zoom_hover_intensity'] ?? 0));
+    $hover_scale_mobile = $this->format_scale(($s['zoom_base_mobile'] ?? 0) + ($s['zoom_hover_intensity'] ?? 0));
+
+    $css .= "
+    .woocommerce ul.products li.product a img{transition:transform .25s ease;transform:scale({$base_desktop});transform-origin:center}
+    .woocommerce ul.products li.product a:hover img{transform:scale({$hover_scale_desktop})}";
+
     if ($mode === 'scroll') {
       // Scroll mode: always single-row scroll on small screens; allow wrap on desktop unless forced
       $css .= "
@@ -369,16 +378,6 @@ class MG_Category_Switcher_Woo {
     echo '<div class="mg-cat-switcher" role="navigation" aria-label="'.esc_attr__('Kategória váltó', 'mg-category-switcher').'">';
     echo '<div class="mg-cat-switcher__title">'.esc_html($title).'</div>';
     echo '<div class="mg-cat-switcher__grid">';
-
-    // On child categories add an "All" chip linking to the parent
-    if ($show_back && $back_term && !is_wp_error($back_term)) {
-      $back_url = get_term_link($back_term);
-      echo '<a class="mg-cat-chip" href="'.esc_url($back_url).'">'.esc_html($back_term->name);
-      if (!empty($s['show_counts'])) {
-        echo ' <span class="mg-cat-chip__count">(' . esc_html__('összes', 'mg-category-switcher') . ')</span>';
-      }
-      echo '</a>';
-    }
 
     foreach ($children as $child) {
       $url = get_term_link($child);
