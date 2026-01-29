@@ -20,6 +20,7 @@ class MG_Category_Switcher_Woo {
     add_action('wp_enqueue_scripts', [$this, 'enqueue_styles']);
     // Place under the category description, above products
     add_action('woocommerce_archive_description', [$this, 'render_switcher'], 25);
+    add_filter('woocommerce_get_price_html', [$this, 'append_from_label_to_price_html'], 20, 2);
   }
 
   /* =========================
@@ -180,7 +181,9 @@ class MG_Category_Switcher_Woo {
     .mg-cat-chip.is-active{border-color:rgba(0,0,0,.55);font-weight:700}
     .mg-cat-chip__count{opacity:.65;font-size:12px}
     .mg-cat-switcher__meta{margin-top:10px;display:flex;gap:10px;flex-wrap:wrap}
-    .mg-cat-back{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:600}";
+    .mg-cat-back{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:600}
+    .woocommerce ul.products li.product a img{transition:transform .25s ease}
+    .woocommerce ul.products li.product a:hover img{transform:scale(1.05)}";
 
     if ($mode === 'scroll') {
       // Scroll mode: always single-row scroll on small screens; allow wrap on desktop unless forced
@@ -196,6 +199,13 @@ class MG_Category_Switcher_Woo {
         .mg-cat-switcher__grid{flex-wrap:wrap;overflow:visible}
       }";
     }
+
+    $css .= "
+    @media (max-width: 768px){
+      .woocommerce ul.products{display:flex;flex-wrap:wrap;gap:12px}
+      .woocommerce ul.products li.product{width:calc(50% - 6px);margin:0}
+      .woocommerce ul.products li.product a img{width:100%;height:auto}
+    }";
 
     wp_register_style('mg-cat-switcher', false, [], self::VERSION);
     wp_enqueue_style('mg-cat-switcher');
@@ -276,6 +286,24 @@ class MG_Category_Switcher_Woo {
     }
 
     echo '</div>';
+  }
+
+  public function append_from_label_to_price_html($price_html, $product) {
+    if (!function_exists('is_product_category') || !is_product_category()) {
+      return $price_html;
+    }
+
+    if (!is_string($price_html) || $price_html === '') {
+      return $price_html;
+    }
+
+    $suffix = ' ' . esc_html__('- tól', 'mg-category-switcher');
+
+    if (strpos($price_html, '</bdi>') !== false) {
+      return preg_replace('/<\/bdi>/', $suffix . '</bdi>', $price_html, 1);
+    }
+
+    return $price_html . $suffix;
   }
 }
 
