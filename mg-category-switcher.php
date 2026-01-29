@@ -20,6 +20,7 @@ class MG_Category_Switcher_Woo {
     add_action('wp_enqueue_scripts', [$this, 'enqueue_styles']);
     // Place under the category description, above products
     add_action('woocommerce_archive_description', [$this, 'render_switcher'], 25);
+    add_action('woocommerce_after_shop_loop_item_title', [$this, 'render_from_label_in_loop'], 11);
   }
 
   /* =========================
@@ -276,6 +277,14 @@ class MG_Category_Switcher_Woo {
     }
 
     echo '</div>';
+  }
+
+  public function render_from_label_in_loop() {
+    if (!function_exists('is_product_category') || !is_product_category()) {
+      return;
+    }
+
+    echo ' ' . esc_html__('- tól', 'mg-category-switcher');
   }
 }
 
