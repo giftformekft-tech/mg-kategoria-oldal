@@ -272,6 +272,15 @@ class MG_Category_Switcher_Woo {
     .woocommerce ul.products li.product a img{transition:transform .25s ease;transform:scale({$base_desktop});transform-origin:center}
     .woocommerce ul.products li.product a:hover img{transform:scale({$hover_scale_desktop})}";
 
+    $base_desktop = $this->format_scale($s['zoom_base_desktop'] ?? 0);
+    $base_mobile = $this->format_scale($s['zoom_base_mobile'] ?? 0);
+    $hover_scale_desktop = $this->format_scale(($s['zoom_base_desktop'] ?? 0) + ($s['zoom_hover_intensity'] ?? 0));
+    $hover_scale_mobile = $this->format_scale(($s['zoom_base_mobile'] ?? 0) + ($s['zoom_hover_intensity'] ?? 0));
+
+    $css .= "
+    .woocommerce ul.products li.product a img{transition:transform .25s ease;transform:scale({$base_desktop});transform-origin:center}
+    .woocommerce ul.products li.product a:hover img{transform:scale({$hover_scale_desktop})}";
+
     if ($mode === 'scroll') {
       // Scroll mode: always single-row scroll on small screens; allow wrap on desktop unless forced
       $css .= "
@@ -289,8 +298,9 @@ class MG_Category_Switcher_Woo {
 
     $css .= "
     @media (max-width: 768px){
-      .woocommerce ul.products{display:flex;flex-wrap:wrap;gap:12px}
-      .woocommerce ul.products li.product{width:calc(50% - 6px);margin:0}
+      .woocommerce ul.products{display:flex;flex-wrap:wrap;gap:8px}
+      .woocommerce ul.products li.product{width:calc(50% - 4px);margin:0}
+      .woocommerce ul.products li.product .astra-shop-summary-wrap{margin-top:6px}
       .woocommerce ul.products li.product a img{width:100%;height:auto;transform:scale({$base_mobile})}
       .woocommerce ul.products li.product a:hover img{transform:scale({$hover_scale_mobile})}
     }";
